@@ -1,0 +1,33 @@
+{
+  "name": "cartero-express-hook",
+  "description": "The Express hook to go along with grunt-cartero.",
+  "version": "0.1.0",
+  "author": {
+    "name": "rotundasoftware",
+    "email": "support@rotundasoftware.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rotundasoftware/cartero-express-hook.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rotundasoftware/cartero-express-hook/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/go-oleg/bundler/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "middleware.js",
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "devDependencies": {},
+  "peerDependencies": {},
+  "keywords": [],
+  "dependencies": {
+    "async": "~0.2.9",
+    "underscore": "~1.4.4"
+  }
+}
