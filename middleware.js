@@ -7,14 +7,14 @@ var kCarteroJsonFileName = "cartero.json";
 
 module.exports = function( rootDir ) {
 
-	var pageMap;
+	var parcelMap;
 	var configMap;
 	var staticDir;
 	var carteroJson;
 
 	try {
 		carteroJson = JSON.parse( fs.readFileSync( path.join( rootDir, kCarteroJsonFileName ) ).toString() );
-		pageMap = carteroJson.parcels;
+		parcelMap = carteroJson.parcels;
 		staticDir = carteroJson.publicDir;
 	}
 	catch( e ) {
@@ -25,24 +25,24 @@ module.exports = function( rootDir ) {
 
 		var oldRender = res.render;
 
-		res.render = function( requestPath, options ) {
-			var pageMapKey = options && options.bundler_pageMapKey ? options.bundler_pageMapKey : requestPath.replace( rootDir, "" ).substring( 1 );
+		res.render = function( filePath, options ) {
+			var parcelMapKey = options && options.cartero_parcelMapKey ? options.cartero_parcelMapKey : filePath.replace( rootDir, "" ).substring( 1 );
 			var _arguments = arguments;
 
-			var pageMetadata = pageMap[ pageMapKey ];
-			if( ! pageMetadata ) return next( new Error( "Could not find pageKey " + pageMapKey + " in page key map." ) );
+			var parcelMetadata = parcelMap[ parcelMapKey ];
+			if( ! parcelMetadata ) return next( new Error( "Could not find parcelKey " + parcelMapKey + " in parcel key map." ) );
 
-			res.locals.bundler_js = _.map( pageMetadata.js, function( fileName ) {
+			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
 				return "<script type='text/javascript' src='" + fileName.replace( staticDir, "" ) + "'></script>";
 			} ).join( "" );
 
-			res.locals.bundler_css = _.map( pageMetadata.css, function( fileName ) {
+			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
 				return "<link rel='stylesheet' href='" + fileName.replace( staticDir, "" ) + "'></link>";
 			} ).join( "" );
 
 			var tmplContents = "";
 
-			async.each( pageMetadata.tmpl, function( fileName, cb ) {
+			async.each( parcelMetadata.tmpl, function( fileName, cb ) {
 				fs.readFile( path.join( rootDir, fileName ),  function( err, data ) {
 
 					if( err ) {
@@ -60,7 +60,7 @@ module.exports = function( rootDir ) {
 					console.log( "ERROR: Exception while reading tmpl files to inject into response: " + err );
 				}
 
-				res.locals.bundler_tmpl = tmplContents;
+				res.locals.cartero_tmpl = tmplContents;
 				oldRender.apply( res, _arguments );
 
 			} );
