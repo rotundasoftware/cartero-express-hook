@@ -22,7 +22,7 @@ app.configure( function() {
 } );
 ```
 
-The middleware wraps the existing `req.render()` function, so it has an opportunity to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables with the appropriate values each time `render` is called. By default, the middleware uses the path of the template passed in as the first argument to `render` as the name of the parcel. You can override this behavor and explicity set what parcel of assets will be served by passing in `cartero_parcel` to the `render` function's `options`.
+The middleware wraps the existing `res.render()` function, so it has an opportunity to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables with the appropriate values before a template is rendered. By default, the middleware uses the path of the template as the name of the parcel. You can override this behavior and explicitly set what parcel of assets will be served by passing in `cartero_parcel` as a property of the `render` function's `locals`.
 
 ```javascript
 res.render( "myTemplate.jade", { cartero_parcel : "parcel/key/as/listed/in/cartero.json" } );
