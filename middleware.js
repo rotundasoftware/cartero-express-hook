@@ -1,4 +1,15 @@
-var fs = require( "fs" ),
+/*
+ * cartero-express-hook v0.1.0
+ * https://github.com/rotundasoftware/cartero-express-hook
+ *
+ * Copyright (c) 2013 Rotunda Software, LLC
+ * Licensed under the MIT license.
+ *
+ * A Node.js / Express Hook for the Cartero asset manager, implemented as Express middleware.
+ * 
+ */
+
+ var fs = require( "fs" ),
 	_ = require( "underscore" ),
 	path = require( "path" ),
 	async = require( "async" ),
