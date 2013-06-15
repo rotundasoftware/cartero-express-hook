@@ -27,4 +27,4 @@ res.render( "myTemplate.jade", { cartero_parcel : "parcel/key/as/listed/in/carte
 ```
 
 
-Please see the [Cartero documentation](https://github.com/rotundasoftware/cartero) for more information.
+Please see the [Cartero documentation](https://github.com/rotundasoftware/cartero#q-does-cartero-work-with-rails-php-etc-or-just-with-nodejs--express) for more information on Cartero Hooks.
