@@ -1,11 +1,12 @@
 var fs = require( "fs" ),
 	_ = require( "underscore" ),
 	path = require( "path" ),
-	async = require( "async" );
+	async = require( "async" ),
+	View = require('express/lib/view');
 
 var kCarteroJsonFileName = "cartero.json";
 
-module.exports = function( rootDir ) {
+module.exports = function( projectDir ) {
 
 	var parcelMap;
 	var configMap;
@@ -13,7 +14,7 @@ module.exports = function( rootDir ) {
 	var carteroJson;
 
 	try {
-		carteroJson = JSON.parse( fs.readFileSync( path.join( rootDir, kCarteroJsonFileName ) ).toString() );
+		carteroJson = JSON.parse( fs.readFileSync( path.join( projectDir, kCarteroJsonFileName ) ).toString() );
 		parcelMap = carteroJson.parcels;
 		staticDir = carteroJson.publicDir;
 	}
@@ -22,15 +23,26 @@ module.exports = function( rootDir ) {
 	}
 
 	return function( req, res, next ) {
-
 		var oldRender = res.render;
 
-		res.render = function( filePath, options ) {
-			var parcelMapKey = options && options.cartero_parcelMapKey ? options.cartero_parcelMapKey : filePath.replace( rootDir, "" ).substring( 1 );
+		res.render = function( name, options ) {
+			// find the absolute path of the view, using same method as app.render
+			var app = req.app;
+			var view = new View( name, {
+				defaultEngine: this.get( "view engine" ),
+				root: app.get( "views" ),
+				engines: app.engines
+			} );
+			var absolutePath = view.path;
+
+			// now get the path relative to our project directory, since that is how it is stored in the parcel map.
+			var relativePath = path.relative( projectDir, absolutePath );
+
+			var parcelName = options && options.cartero_parcel ? options.cartero_parcel : relativePath;
 			var _arguments = arguments;
 
-			var parcelMetadata = parcelMap[ parcelMapKey ];
-			if( ! parcelMetadata ) return next( new Error( "Could not find parcelKey " + parcelMapKey + " in parcel key map." ) );
+			var parcelMetadata = parcelMap[ parcelName ];
+			if( ! parcelMetadata ) return next( new Error( "Could not find parcel \"" + parcelName + "\" in parcel map." ) );
 
 			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
 				return "<script type='text/javascript' src='" + fileName.replace( staticDir, "" ) + "'></script>";
@@ -43,8 +55,7 @@ module.exports = function( rootDir ) {
 			var tmplContents = "";
 
 			async.each( parcelMetadata.tmpl, function( fileName, cb ) {
-				fs.readFile( path.join( rootDir, fileName ),  function( err, data ) {
-
+				fs.readFile( path.join( projectDir, fileName ),  function( err, data ) {
 					if( err ) {
 						cb( err );
 						return;
@@ -52,7 +63,6 @@ module.exports = function( rootDir ) {
 
 					tmplContents += data.toString();
 					cb();
-
 				} );
 			},
 			function( err ) {
@@ -62,9 +72,7 @@ module.exports = function( rootDir ) {
 
 				res.locals.cartero_tmpl = tmplContents;
 				oldRender.apply( res, _arguments );
-
 			} );
-			
 		};
 
 		next();
