@@ -1,4 +1,4 @@
-A Node.js / Express  Hook for the [Cartero](https://github.com/rotundasoftware/cartero) asset manager, implemented as Express middleware.
+A Node.js / Express  Hook for the [Cartero asset manager](https://github.com/rotundasoftware/cartero), implemented as Express middleware.
 
 Please see the Cartero documentation for more information.
 
@@ -22,7 +22,7 @@ app.configure( function() {
 } );
 ```
 
-The middleware wraps the existing `res.render()` function, so it has an opportunity to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables with the appropriate values before a template is rendered. By default, the middleware uses the path of the template as the name of the parcel. You can override this behavior and explicitly set what parcel of assets will be served by passing in `cartero_parcel` as a property of the `render` function's `locals`.
+The middleware wraps the existing `res.render()` function, so it has an opportunity to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables with the appropriate values each time a template is rendered. By default, the middleware uses the path of the template as the name of the parcel of assets to serve. You can override this behavior and explicitly set what parcel of assets will be served by passing in `cartero_parcel` as a property of the `render` function's `locals`.
 
 ```javascript
 res.render( "myTemplate.jade", { cartero_parcel : "parcel/key/as/listed/in/cartero.json" } );
