@@ -20,14 +20,15 @@ module.exports = function( projectDir ) {
 
 		// for each request, wrap the render function so that we can execute our own code 
 		// first to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables.
-		res.render = function( view, options ) {
+		res.render = function( name, options ) {
+			var _arguments = arguments;
 			var parcelName;
 			
 			if( options && options.cartero_parcel ) parcelName = options.cartero_parcel;
 			else {
 				// find the absolute path of the view, using same method as app.render
 				var app = req.app;
-				var view = new View( view, {
+				var view = new View( name, {
 					defaultEngine: this.get( "view engine" ),
 					root: app.get( "views" ),
 					engines: app.engines
