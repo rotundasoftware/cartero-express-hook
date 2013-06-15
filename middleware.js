@@ -7,16 +7,11 @@ var fs = require( "fs" ),
 var kCarteroJsonFileName = "cartero.json";
 
 module.exports = function( projectDir ) {
-
-	var parcelMap;
-	var configMap;
-	var staticDir;
 	var carteroJson;
 
+	// cache the cartero.json file, which lists the required assets for each view template.
 	try {
 		carteroJson = JSON.parse( fs.readFileSync( path.join( projectDir, kCarteroJsonFileName ) ).toString() );
-		parcelMap = carteroJson.parcels;
-		staticDir = carteroJson.publicDir;
 	}
 	catch( e ) {
 		throw new Error( "Error while reading parcels.json file. Please run the grunt cartero task before running your application." + e.stack );
@@ -25,44 +20,47 @@ module.exports = function( projectDir ) {
 	return function( req, res, next ) {
 		var oldRender = res.render;
 
+		// for each request, wrap the render function so that we can execute our own code 
+		// first to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables.
 		res.render = function( name, options ) {
-			// find the absolute path of the view, using same method as app.render
-			var app = req.app;
-			var view = new View( name, {
-				defaultEngine: this.get( "view engine" ),
-				root: app.get( "views" ),
-				engines: app.engines
-			} );
-			var absolutePath = view.path;
+			var parcelName;
+			
+			if( options && options.cartero_parcel ) parcelName = options.cartero_parcel;
+			else {
+				// find the absolute path of the view, using same method as app.render
+				var app = req.app;
+				var view = new View( name, {
+					defaultEngine: this.get( "view engine" ),
+					root: app.get( "views" ),
+					engines: app.engines
+				} );
+				var absolutePath = view.path;
 
-			// now get the path relative to our project directory, since that is how it is stored in the parcel map.
-			var relativePath = path.relative( projectDir, absolutePath );
+				parcelName = path.relative( projectDir, absolutePath );
+			}
 
-			var parcelName = options && options.cartero_parcel ? options.cartero_parcel : relativePath;
-			var _arguments = arguments;
-
-			var parcelMetadata = parcelMap[ parcelName ];
+			var parcelMetadata = carteroJson.parcels[ parcelName ];
 			if( ! parcelMetadata ) return next( new Error( "Could not find parcel \"" + parcelName + "\" in parcel map." ) );
 
 			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
-				return "<script type='text/javascript' src='" + fileName.replace( staticDir, "" ) + "'></script>";
+				return "<script type='text/javascript' src='" + fileName.replace( carteroJson.publicDir, "" ) + "'></script>";
 			} ).join( "" );
 
 			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
-				return "<link rel='stylesheet' href='" + fileName.replace( staticDir, "" ) + "'></link>";
+				return "<link rel='stylesheet' href='" + fileName.replace( carteroJson.publicDir, "" ) + "'></link>";
 			} ).join( "" );
 
 			var tmplContents = "";
 
-			async.each( parcelMetadata.tmpl, function( fileName, cb ) {
+			async.each( parcelMetadata.tmpl, function( fileName, callback ) {
 				fs.readFile( path.join( projectDir, fileName ),  function( err, data ) {
 					if( err ) {
-						cb( err );
+						callback( err );
 						return;
 					}
-
+					
 					tmplContents += data.toString();
-					cb();
+					callback();
 				} );
 			},
 			function( err ) {
