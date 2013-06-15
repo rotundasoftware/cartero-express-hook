@@ -1,7 +1,5 @@
 A Node.js / Express  Hook for the [Cartero asset manager](https://github.com/rotundasoftware/cartero), implemented as Express middleware.
 
-Please see the Cartero documentation for more information.
-
 ## Usage
 
 After configuring the Cartero Grunt Task, install the middleware when your application is initialized, passing it the absolute path of your project directory (i.e. the `projectDir` option from the gruntfile configuration).
@@ -27,3 +25,6 @@ The middleware wraps the existing `res.render()` function, so it has an opportun
 ```javascript
 res.render( "myTemplate.jade", { cartero_parcel : "parcel/key/as/listed/in/cartero.json" } );
 ```
+
+
+Please see the [Cartero documentation](https://github.com/rotundasoftware/cartero) for more information.
