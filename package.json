@@ -1,6 +1,6 @@
 {
   "name": "cartero-express-hook",
-  "description": "The Express hook to go along with grunt-cartero.",
+  "description": "The Node.js / Express hook to go along with Cartero asset manager.",
   "version": "0.1.0",
   "author": {
     "name": "rotundasoftware",
