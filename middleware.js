@@ -37,14 +37,21 @@ module.exports = function( projectDir ) {
 			
 			if( options && options.cartero_parcel ) parcelName = options.cartero_parcel;
 			else {
-				// find the absolute path of the view, using same method as app.render
 				var app = req.app;
-				var view = new View( name, {
-					defaultEngine: this.get( "view engine" ),
-					root: app.get( "views" ),
-					engines: app.engines
-				} );
-				var absolutePath = view.path;
+				var absolutePath;
+				
+				// try to find the absolute path of the template by resolving it against the views folder
+				absolutePath = path.resolve( app.get( "views" ), name );
+				if( ! path.existsSync( absolutePath ) ) {
+					// if that doesn't work, resolve it using same method as app.render, which adds
+					// extensions based on the view engine being used, etc.
+					var view = new View( name, {
+						defaultEngine: this.get( "view engine" ),
+						root: app.get( "views" ),
+						engines: app.engines
+					} );
+					absolutePath = view.path;
+				}
 
 				parcelName = path.relative( projectDir, absolutePath );
 			}
