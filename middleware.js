@@ -39,10 +39,11 @@ module.exports = function( projectDir ) {
 			else {
 				var app = req.app;
 				var absolutePath;
+				var existsSync = fs.existsSync ? fs.existsSync : path.existsSync;
 				
 				// try to find the absolute path of the template by resolving it against the views folder
 				absolutePath = path.resolve( app.get( "views" ), name );
-				if( ! path.existsSync( absolutePath ) ) {
+				if( ! existsSync( absolutePath ) ) {
 					// if that doesn't work, resolve it using same method as app.render, which adds
 					// extensions based on the view engine being used, etc.
 					var view = new View( name, {
