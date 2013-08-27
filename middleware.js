@@ -6,7 +6,7 @@
  * Licensed under the MIT license.
  *
  * A Node.js / Express Hook for the Cartero asset manager, implemented as Express middleware.
- * 
+ *
  */
 
  var fs = require( "fs" ),
@@ -15,7 +15,7 @@
 	async = require( "async" ),
 	View = require('express/lib/view');
 
-module.exports = function( projectDir ) {
+module.exports = function( projectDir, contextPath ) {
 	var carteroJson;
 
 	// cache the cartero.json file, which lists the required assets for each view template.
@@ -26,21 +26,28 @@ module.exports = function( projectDir ) {
 		throw new Error( "Error while reading the cartero.json file. Have you run the grunt cartero task yet?" + err.stack );
 	}
 
+	//start up context path settings
+	contextPath = contextPath || '';
+
+	if (!_.isString(contextPath)){
+		throw new Error("Context Path must be a string");
+	}
+
 	return function( req, res, next ) {
 		var oldRender = res.render;
 
-		// for each request, wrap the render function so that we can execute our own code 
+		// for each request, wrap the render function so that we can execute our own code
 		// first to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables.
 		res.render = function( name, options ) {
 			var _arguments = arguments;
 			var parcelName;
-			
+
 			if( options && options.cartero_parcel ) parcelName = options.cartero_parcel;
 			else {
 				var app = req.app;
 				var absolutePath;
 				var existsSync = fs.existsSync ? fs.existsSync : path.existsSync;
-				
+
 				// try to find the absolute path of the template by resolving it against the views folder
 				absolutePath = path.resolve( app.get( "views" ), name );
 				if( ! existsSync( absolutePath ) ) {
@@ -61,10 +68,12 @@ module.exports = function( projectDir ) {
 			if( ! parcelMetadata ) return next( new Error( "Could not find parcel \"" + parcelName + "\" in parcel map." ) );
 
 			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
+				fileName = contextPath + fileName;
 				return "<script type='text/javascript' src='" + fileName.replace( carteroJson.publicDir, "" ) + "'></script>";
 			} ).join( "" );
 
 			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
+				fileName = contextPath + fileName;
 				return "<link rel='stylesheet' href='" + fileName.replace( carteroJson.publicDir, "" ) + "'></link>";
 			} ).join( "" );
 
