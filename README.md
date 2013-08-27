@@ -28,3 +28,22 @@ res.render( "myTemplate.jade", { cartero_parcel : "parcel/key/as/listed/in/carte
 
 
 Please see the [Cartero documentation](https://github.com/rotundasoftware/cartero#q-does-cartero-work-with-rails-php-etc-or-just-with-nodejs--express) for more information on Cartero Hooks.
+
+## Support for different Context Path
+
+If you are using a different context path in your express for your static resources, you can specify in the carteroMiddleware. By doing this, all your cartero resources will be prefixed by your context path.
+
+```javascript
+
+var app = express();
+var carteroMiddleware = require( "cartero-express-hook" );
+// ...
+
+app.configure( function() {
+	app.set( "port" , process.env.PORT || 3000 );
+	app.set( "views" , path.join( __dirname, "views" ) );
+	app.use( '/static-resources', express.static( path.join( __dirname, "static" ) ) );
+	// ...
+	app.use( carteroMiddleware( __dirname, '/static-resources' ) );	// install the Cartero Hook
+} );
+```
