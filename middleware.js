@@ -1,5 +1,5 @@
 /*
- * cartero-express-hook v0.1.0
+ * cartero-express-hook v0.1.1
  * https://github.com/rotundasoftware/cartero-express-hook
  *
  * Copyright (c) 2013 Rotunda Software, LLC
@@ -61,11 +61,21 @@ module.exports = function( projectDir ) {
 			if( ! parcelMetadata ) return next( new Error( "Could not find parcel \"" + parcelName + "\" in parcel map." ) );
 
 			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
-				return "<script type='text/javascript' src='" + fileName.replace( carteroJson.publicDir, "" ) + "'></script>";
+				// don't change file path if its a CDN file
+				if ( ! /https?:\/\//.test( fileName ) )
+					fileName = fileName.replace( carteroJson.publicDir, "" );
+
+				return "<script type='text/javascript' src='" + fileName + "'></script>";
+				
 			} ).join( "" );
 
 			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
-				return "<link rel='stylesheet' href='" + fileName.replace( carteroJson.publicDir, "" ) + "'></link>";
+				// don't change file path if its a CDN file
+				if ( ! /https?:\/\//.test( fileName ) )
+					fileName = fileName.replace( carteroJson.publicDir, "" );
+
+				return "<link rel='stylesheet' href='" + fileName + "'></link>";
+
 			} ).join( "" );
 
 			var tmplContents = "";
