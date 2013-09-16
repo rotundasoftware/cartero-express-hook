@@ -1,5 +1,5 @@
 /*
- * cartero-express-hook v0.1.0
+ * cartero-express-hook v0.1.1
  * https://github.com/rotundasoftware/cartero-express-hook
  *
  * Copyright (c) 2013 Rotunda Software, LLC
