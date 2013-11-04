@@ -47,7 +47,7 @@ module.exports = function( projectDir ) {
 					// if that doesn't work, resolve it using same method as app.render, which adds
 					// extensions based on the view engine being used, etc.
 					var view = new View( name, {
-						defaultEngine: this.get( "view engine" ),
+						defaultEngine: app.get( "view engine" ),
 						root: app.get( "views" ),
 						engines: app.engines
 					} );
