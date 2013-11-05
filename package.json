@@ -1,7 +1,7 @@
 {
   "name": "cartero-express-hook",
   "description": "The Node.js / Express hook to go along with Cartero asset manager.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "rotundasoftware",
     "email": "support@rotundasoftware.com"
