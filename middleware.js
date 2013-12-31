@@ -26,6 +26,9 @@ module.exports = function( projectDir ) {
 		throw new Error( "Error while reading the cartero.json file. Have you run the grunt cartero task yet?" + err.stack );
 	}
 
+	// trim off leading and trailing slashes from public url, which we'll need to prepend to asset urls later
+	var trimmedPublicUrl = carteroJson.publicUrl.replace( /\/$/, "" ).replace( /^\//, "" );
+
 	return function( req, res, next ) {
 		var oldRender = res.render;
 
@@ -63,7 +66,7 @@ module.exports = function( projectDir ) {
 			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
 				// don't change file path if its a CDN file
 				if ( ! /https?:\/\//.test( fileName ) )
-					fileName = fileName.replace( carteroJson.publicDir, "" );
+					fileName = trimmedPublicUrl + fileName.replace( carteroJson.publicDir, "" );
 
 				return "<script type='text/javascript' src='" + fileName + "'></script>";
 				
@@ -72,7 +75,7 @@ module.exports = function( projectDir ) {
 			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
 				// don't change file path if its a CDN file
 				if ( ! /https?:\/\//.test( fileName ) )
-					fileName = fileName.replace( carteroJson.publicDir, "" );
+					fileName = trimmedPublicUrl + fileName.replace( carteroJson.publicDir, "" );
 
 				return "<link rel='stylesheet' href='" + fileName + "'></link>";
 
