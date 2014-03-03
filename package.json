@@ -27,7 +27,7 @@
   "peerDependencies": {},
   "keywords": [],
   "dependencies": {
-    "async": "~0.2.9",
+    "async": "~0.2.10",
     "underscore": "~1.4.4"
   }
 }

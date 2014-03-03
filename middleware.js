@@ -15,90 +15,72 @@
 	async = require( "async" ),
 	View = require('express/lib/view');
 
-module.exports = function( projectDir ) {
-	var carteroJson;
+module.exports = function( options ) {
+	var assetsDir = options.assetsDir;
+	var assetsBaseUrl = options.assetsBaseUrl;
+	var viewMap;
+	var assetsMap = {};
 
-	// cache the cartero.json file, which lists the required assets for each view template.
 	try {
-		carteroJson = JSON.parse( fs.readFileSync( path.join( projectDir, "cartero.json" ) ).toString() );
+		viewMap = require( path.join( assetsDir, "view_map.json" ) );
 	}
 	catch( err ) {
-		throw new Error( "Error while reading the cartero.json file. Have you run the grunt cartero task yet?" + err.stack );
+		throw new Error( "Error while reading the view_map.json file. Have you run the grunt cartero task yet?" + err.stack );
 	}
 
 	return function( req, res, next ) {
 		var oldRender = res.render;
 
 		// for each request, wrap the render function so that we can execute our own code 
-		// first to populate the `cartero_js`, `cartero_css`, and `cartero_tmpl` variables.
+		// first to populate the `cartero_js`, `cartero_css`
 		res.render = function( name, options ) {
 			var _arguments = arguments;
-			var parcelName;
+			var app = req.app;
+			var absolutePath;
+			var existsSync = fs.existsSync ? fs.existsSync : path.existsSync;
 			
-			if( options && options.cartero_parcel ) parcelName = options.cartero_parcel;
-			else {
-				var app = req.app;
-				var absolutePath;
-				var existsSync = fs.existsSync ? fs.existsSync : path.existsSync;
-				
-				// try to find the absolute path of the template by resolving it against the views folder
-				absolutePath = path.resolve( app.get( "views" ), name );
-				if( ! existsSync( absolutePath ) ) {
-					// if that doesn't work, resolve it using same method as app.render, which adds
-					// extensions based on the view engine being used, etc.
-					var view = new View( name, {
-						defaultEngine: app.get( "view engine" ),
-						root: app.get( "views" ),
-						engines: app.engines
-					} );
-					absolutePath = view.path;
-				}
-
-				parcelName = path.relative( projectDir, absolutePath );
+			// try to find the absolute path of the template by resolving it against the views folder
+			absolutePath = path.resolve( app.get( "views" ), name );
+			if( ! existsSync( absolutePath ) ) {
+				// if that doesn't work, resolve it using same method as app.render, which adds
+				// extensions based on the view engine being used, etc.
+				var view = new View( name, {
+					defaultEngine: app.get( "view engine" ),
+					root: app.get( "views" ),
+					engines: app.engines
+				} );
+				absolutePath = view.path;
 			}
 
-			var parcelMetadata = carteroJson.parcels[ parcelName ];
-			if( ! parcelMetadata ) return next( new Error( "Could not find parcel \"" + parcelName + "\" in parcel map." ) );
+			var parcelId = viewMap[ absolutePath ];
 
-			res.locals.cartero_js = _.map( parcelMetadata.js, function( fileName ) {
-				// don't change file path if its a CDN file
-				if ( ! /https?:\/\//.test( fileName ) )
-					fileName = carteroJson.publicUrl + fileName.replace( carteroJson.publicDir, "" );
-
-				return "<script type='text/javascript' src='" + fileName + "'></script>";
-				
-			} ).join( "" );
-
-			res.locals.cartero_css = _.map( parcelMetadata.css, function( fileName ) {
-				// don't change file path if its a CDN file
-				if ( ! /https?:\/\//.test( fileName ) )
-					fileName = carteroJson.publicUrl + fileName.replace( carteroJson.publicDir, "" );
-
-				return "<link rel='stylesheet' href='" + fileName + "'></link>";
-
-			} ).join( "" );
-
-			var tmplContents = "";
-
-			async.each( parcelMetadata.tmpl, function( fileName, callback ) {
-				fs.readFile( path.join( projectDir, fileName ),  function( err, data ) {
-					if( err ) {
-						callback( err );
-						return;
+			async.waterfall( [
+				function( callback ) {
+					if( assetsMap[ parcelId ] )
+						callback( null, assetsMap[ parcelId ] );
+					else {
+						fs.readFile( path.join( assetsDir, parcelId, "assets.json" ), function( err, contents ) {
+							if( err ) return callback( err );
+							assetsMap[ parcelId ] = JSON.parse( contents );
+							callback( null, assetsMap[ parcelId ] );
+						} );
 					}
+				}],
+				function( err, assets ) {
+					if( err ) return next( err );
 
-					tmplContents += data.toString();
-					callback();
-				} );
-			},
-			function( err ) {
-				if( err ) {
-					console.log( "ERROR: Exception while reading tmpl files to inject into response: " + err );
+					res.locals.cartero_js = _.map( assets.script, function( fileName ) {
+						return "<script type='text/javascript' src='" + path.join( assetsBaseUrl, fileName ) + "'></script>";
+					} ).join( "" );
+
+					res.locals.cartero_css = _.map( assets.style, function( fileName ) {
+						return "<link rel='stylesheet' href='" + path.join( assetsBaseUrl, fileName ) + "'></link>";
+					} ).join( "" );
+
+					oldRender.apply( res, _arguments );
+
 				}
-
-				res.locals.cartero_tmpl = tmplContents;
-				oldRender.apply( res, _arguments );
-			} );
+			);
 		};
 
 		next();
