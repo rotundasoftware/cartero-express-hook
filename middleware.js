@@ -13,6 +13,7 @@
 	_ = require( "underscore" ),
 	path = require( "path" ),
 	async = require( "async" ),
+	shasum = require( "shasum" ),
 	View = require('express/lib/view');
 
 module.exports = function( options ) {
@@ -52,7 +53,7 @@ module.exports = function( options ) {
 				absolutePath = view.path;
 			}
 
-			var parcelId = viewMap[ absolutePath ];
+			var parcelId = viewMap[ shasum( absolutePath ) ];
 
 			async.waterfall( [
 				function( callback ) {
