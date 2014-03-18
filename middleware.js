@@ -10,24 +10,12 @@
  */
 
  var fs = require( "fs" ),
-	_ = require( "underscore" ),
 	path = require( "path" ),
-	async = require( "async" ),
-	shasum = require( "shasum" ),
+	carteroNodeHook = require( "cartero-node-hook" ),
 	View = require('express/lib/view');
 
 module.exports = function( options ) {
-	var assetsDir = options.assetsDir;
-	var assetsBaseUrl = options.assetsBaseUrl;
-	var viewMap;
-	var assetsMap = {};
-
-	try {
-		viewMap = require( path.join( assetsDir, "view_map.json" ) );
-	}
-	catch( err ) {
-		throw new Error( "Error while reading the view_map.json file. Have you run the grunt cartero task yet?" + err.stack );
-	}
+	var hook = carteroNodeHook( options );
 
 	return function( req, res, next ) {
 		var oldRender = res.render;
@@ -53,35 +41,16 @@ module.exports = function( options ) {
 				absolutePath = view.path;
 			}
 
-			var parcelId = viewMap[ shasum( absolutePath ) ];
+			hook.getAssetsForView( absolutePath, function( err, result ) {
+				if( err )
+					return next( err );
 
-			async.waterfall( [
-				function( callback ) {
-					if( assetsMap[ parcelId ] )
-						callback( null, assetsMap[ parcelId ] );
-					else {
-						fs.readFile( path.join( assetsDir, parcelId, "assets.json" ), function( err, contents ) {
-							if( err ) return callback( err );
-							assetsMap[ parcelId ] = JSON.parse( contents );
-							callback( null, assetsMap[ parcelId ] );
-						} );
-					}
-				}],
-				function( err, assets ) {
-					if( err ) return next( err );
+				res.locals.cartero_js = result.js;
+				res.locals.cartero_css = result.css;
+				oldRender.apply( res, _arguments );
+			} );
 
-					res.locals.cartero_js = _.map( assets.script, function( fileName ) {
-						return "<script type='text/javascript' src='" + path.join( assetsBaseUrl, fileName ) + "'></script>";
-					} ).join( "" );
-
-					res.locals.cartero_css = _.map( assets.style, function( fileName ) {
-						return "<link rel='stylesheet' href='" + path.join( assetsBaseUrl, fileName ) + "'></link>";
-					} ).join( "" );
-
-					oldRender.apply( res, _arguments );
-
-				}
-			);
+			
 		};
 
 		next();

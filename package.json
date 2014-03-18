@@ -27,8 +27,7 @@
   "peerDependencies": {},
   "keywords": [],
   "dependencies": {
-    "async": "~0.2.10",
-    "underscore": "~1.4.4",
-    "shasum": "~1.0.0"
+    "express": "~3.4.8",
+    "cartero-node-hook": "~0.0.0"
   }
 }
